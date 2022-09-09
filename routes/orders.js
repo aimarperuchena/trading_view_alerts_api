@@ -1,4 +1,4 @@
-var express = require('express');
+var express = require("express");
 var router = express.Router();
 const Binance = require("node-binance-api");
 const mysql2 = require("mysql2/promise");
@@ -15,77 +15,97 @@ const binance = new Binance().options({
 });
 
 /* GET users listing. */
-router.get('/open', function(req, res, next) {
+router.get("/open", function (req, res, next) {
   let symbol = req.query.market;
   let invest = req.query.invest;
   let key = req.query.api_key;
- 
+
   if (
     symbol !== undefined &&
     invest !== undefined &&
     invest > 0 &&
     key !== undefined
   ) {
-   
     const verification = selectKey(key);
-    verification.then((verify) => {
-      verify = verify[0];
-   
-      if (verify.length > 0) {
-        let user_id = verify[0].id;
-        binance.bookTickers((error, ticker) => {
-          var current_ticker = ticker.filter(function (market) {
-            return market.symbol == symbol;
-          });
-          current_ticker = current_ticker[0];
+    verification
+      .then((verify) => {
+        verify = verify[0];
 
-          let current_price = current_ticker.askPrice;
+        if (verify.length > 0) {
+          let user_id = verify[0].id;
+          binance.bookTickers((error, ticker) => {
+            var current_ticker = ticker.filter(function (market) {
+              return market.symbol == symbol;
+            });
+            current_ticker = current_ticker[0];
 
-          const order_exist = selectOrderExit(symbol, "OPEN", user_id);
-          order_exist.then((order_exist_data) => {
-           
-            if (order_exist_data[0][0].cont == 0) {
-              let balance = parseFloat(invest / current_price, 4).toFixed(5);
+            let current_price = current_ticker.askPrice;
 
-              const insert_order = createOrder(
-                symbol,
-                current_price,
-                invest,
-                balance,
-                user_id
-              );
-              insert_order.then(() => {
-                const get_balance = selectBalance(user_id);
-                get_balance.then((bank) => {
-                  let last_balance = bank[0][0].balance;
-                  let new_balance = last_balance - invest;
-                  let new_balance_update = newBalance(
-                    new_balance,
+            const order_exist = selectOrderExit(symbol, "OPEN", user_id);
+            order_exist
+              .then((order_exist_data) => {
+                if (order_exist_data[0][0].cont == 0) {
+                  let balance = parseFloat(invest / current_price, 4).toFixed(
+                    5
+                  );
+
+                  const insert_order = createOrder(
+                    symbol,
+                    current_price,
                     invest,
-                    "OPEN",
+                    balance,
                     user_id
                   );
-                  new_balance_update.then(() => {
-                    res.json({ status: true, msg: "Order created" });
+                  insert_order
+                    .then(() => {
+                      const get_balance = selectBalance(user_id);
+                      get_balance
+                        .then((bank) => {
+                          let last_balance = bank[0][0].balance;
+                          let new_balance = last_balance - invest;
+                          let new_balance_update = newBalance(
+                            new_balance,
+                            invest,
+                            "OPEN",
+                            user_id
+                          );
+                          new_balance_update
+                            .then(() => {
+                              res.json({ status: true, msg: "Order created" });
+                            })
+                            .catch((err) => {
+                              console.log(err);
+                            });
+                        })
+                        .catch((err) => {
+                          console.log(err);
+                        });
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                    });
+                } else {
+                  res.json({
+                    status: true,
+                    msg: "Already exist a order for that market",
                   });
-                });
+                }
+              })
+              .catch((err) => {
+                console.log(err);
               });
-            } else {
-              res.json({
-                status: true,
-                msg: "Already exist a order for that market",
-              });
-            }
           });
-        });
-      } else {
-        res.json({
-          status: false,
-          msg: "API KEY ERROR",
-        });
-      }
-    });
-  }else{
+        } else {
+          res.json({
+            status: false,
+            msg: "API KEY ERROR",
+          });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  } else {
     res.json({
       status: false,
       msg: "API KEY ERROR",
@@ -94,16 +114,14 @@ router.get('/open', function(req, res, next) {
 });
 router.get("/close", function (req, res) {
   let symbol = req.query.market;
- 
+
   let key = req.query.api_key;
 
-  
- 
   if (symbol !== undefined && key !== undefined) {
     const verification = selectKey(key);
     verification.then((verify) => {
       verify = verify[0];
-      
+
       if (verify.length > 0) {
         let user_id = verify[0].id;
         binance.bookTickers((error, ticker) => {
@@ -114,7 +132,7 @@ router.get("/close", function (req, res) {
 
           let current_price = current_ticker.askPrice;
 
-          let order_opened = selectOrderOpened(symbol,user_id);
+          let order_opened = selectOrderOpened(symbol, user_id);
           order_opened.then((order_data) => {
             order_data = order_data[0];
             if (order_data.length > 0) {
@@ -170,9 +188,6 @@ router.get("/close", function (req, res) {
     });
   }
 });
-
-
-
 
 async function createOrder(symbol, open_price, invest, balance, user_id) {
   const result = await pool.query(
@@ -231,6 +246,5 @@ async function selectKey(key) {
 }
 
 module.exports = router;
-
 
 module.exports = router;
