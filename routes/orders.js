@@ -75,14 +75,17 @@ router.get("/open", function (req, res, next) {
                             })
                             .catch((err) => {
                               console.log(err);
+                              console.log('1')
                             });
                         })
                         .catch((err) => {
                           console.log(err);
+                          console.log('2')
                         });
                     })
                     .catch((err) => {
                       console.log(err);
+                      console.log('3')
                     });
                 } else {
                   res.json({
@@ -93,6 +96,7 @@ router.get("/open", function (req, res, next) {
               })
               .catch((err) => {
                 console.log(err);
+                console.log('4')
               });
           });
         } else {
@@ -104,6 +108,7 @@ router.get("/open", function (req, res, next) {
       })
       .catch((err) => {
         console.log(err);
+        console.log('5')
       });
   } else {
     res.json({
