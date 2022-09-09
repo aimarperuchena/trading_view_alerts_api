@@ -1,4 +1,4 @@
-var express = require("express");
+var express = require('express');
 var router = express.Router();
 const Binance = require("node-binance-api");
 const mysql2 = require("mysql2/promise");
@@ -14,16 +14,21 @@ const binance = new Binance().options({
   APISECRET: process.env.APISECRET,
 });
 
-router.post("/open", function (req, res) {
-  let symbol = req.body.market;
-  let invest = req.body.invest;
-  let key = req.body.key;
+/* GET users listing. */
+router.get('/open', function(req, res, next) {
+  let symbol = req.query.market;
+  let invest = req.query.invest;
+  let key = req.query.api_key;
+  console.log(req);
+  console.log(invest);
+  console.log(key);
   if (
     symbol !== undefined &&
     invest !== undefined &&
     invest > 0 &&
     key !== undefined
   ) {
+    console.log('HOLA');
     const verification = selectKey(key);
     verification.then((verify) => {
       verify = verify[0];
@@ -40,7 +45,7 @@ router.post("/open", function (req, res) {
 
           const order_exist = selectOrderExit(symbol, "OPEN", user_id);
           order_exist.then((order_exist_data) => {
-            console.log(order_exist_data[0][0].cont);
+           
             if (order_exist_data[0][0].cont == 0) {
               let balance = parseFloat(invest / current_price, 4).toFixed(5);
 
@@ -82,17 +87,22 @@ router.post("/open", function (req, res) {
         });
       }
     });
+  }else{
+    console.log(error);
   }
 });
+router.get("/close", function (req, res) {
+  let symbol = req.query.market;
+ 
+  let key = req.query.api_key;
 
-router.post("/close", function (req, res) {
-  let symbol = req.body.market;
-  let key = req.body.api_key;
+  
+  console.log(key);
   if (symbol !== undefined && key !== undefined) {
     const verification = selectKey(key);
     verification.then((verify) => {
       verify = verify[0];
-      console.log(verify);
+      
       if (verify.length > 0) {
         let user_id = verify[0].id;
         binance.bookTickers((error, ticker) => {
@@ -103,7 +113,7 @@ router.post("/close", function (req, res) {
 
           let current_price = current_ticker.askPrice;
 
-          let order_opened = selectOrderOpened(symbol);
+          let order_opened = selectOrderOpened(symbol,user_id);
           order_opened.then((order_data) => {
             order_data = order_data[0];
             if (order_data.length > 0) {
@@ -160,6 +170,9 @@ router.post("/close", function (req, res) {
   }
 });
 
+
+
+
 async function createOrder(symbol, open_price, invest, balance, user_id) {
   const result = await pool.query(
     "INSERT INTO orders SET symbol = ?, open_price=?, invest = ?, balance = ?, user_id=?",
@@ -215,5 +228,8 @@ async function selectKey(key) {
   );
   return result;
 }
+
+module.exports = router;
+
 
 module.exports = router;
