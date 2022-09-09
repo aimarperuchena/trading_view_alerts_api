@@ -15,7 +15,7 @@ const binance = new Binance().options({
 });
 
 /* GET users listing. */
-router.get("/open", function (req, res, next) {
+router.post("/open", function (req, res, next) {
   let symbol = req.query.market;
   let invest = req.query.invest;
   let key = req.query.api_key;
@@ -117,7 +117,7 @@ router.get("/open", function (req, res, next) {
     });
   }
 });
-router.get("/close", function (req, res) {
+router.post("/close", function (req, res) {
   let symbol = req.query.market;
 
   let key = req.query.api_key;
