@@ -19,20 +19,18 @@ router.get('/open', function(req, res, next) {
   let symbol = req.query.market;
   let invest = req.query.invest;
   let key = req.query.api_key;
-  console.log(req);
-  console.log(invest);
-  console.log(key);
+ 
   if (
     symbol !== undefined &&
     invest !== undefined &&
     invest > 0 &&
     key !== undefined
   ) {
-    console.log('HOLA');
+   
     const verification = selectKey(key);
     verification.then((verify) => {
       verify = verify[0];
-      console.log(verify);
+   
       if (verify.length > 0) {
         let user_id = verify[0].id;
         binance.bookTickers((error, ticker) => {
@@ -88,7 +86,10 @@ router.get('/open', function(req, res, next) {
       }
     });
   }else{
-    console.log(error);
+    res.json({
+      status: false,
+      msg: "API KEY ERROR",
+    });
   }
 });
 router.get("/close", function (req, res) {
@@ -97,7 +98,7 @@ router.get("/close", function (req, res) {
   let key = req.query.api_key;
 
   
-  console.log(key);
+ 
   if (symbol !== undefined && key !== undefined) {
     const verification = selectKey(key);
     verification.then((verify) => {
