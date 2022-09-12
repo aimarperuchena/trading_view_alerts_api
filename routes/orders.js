@@ -37,67 +37,72 @@ router.post("/open", function (req, res, next) {
             var current_ticker = ticker.filter(function (market) {
               return market.symbol == symbol;
             });
-            current_ticker = current_ticker[0];
+            if (current_ticker.length > 0) {
+              current_ticker = current_ticker[0];
 
-            let current_price = current_ticker.askPrice;
+              let current_price = current_ticker.askPrice;
 
-            const order_exist = selectOrderExit(symbol, "OPEN", user_id);
-            order_exist
-              .then((order_exist_data) => {
-                if (order_exist_data[0][0].cont == 0) {
-                  let balance = parseFloat(invest / current_price, 4).toFixed(
-                    5
-                  );
+              const order_exist = selectOrderExit(symbol, "OPEN", user_id);
+              order_exist
+                .then((order_exist_data) => {
+                  if (order_exist_data[0][0].cont == 0) {
+                    let balance = parseFloat(invest / current_price, 4).toFixed(
+                      5
+                    );
 
-                  const insert_order = createOrder(
-                    symbol,
-                    current_price,
-                    invest,
-                    balance,
-                    user_id
-                  );
-                  insert_order
-                    .then(() => {
-                      const get_balance = selectBalance(user_id);
-                      get_balance
-                        .then((bank) => {
-                          let last_balance = bank[0][0].balance;
-                          let new_balance = last_balance - invest;
-                          let new_balance_update = newBalance(
-                            new_balance,
-                            invest,
-                            "OPEN",
-                            user_id
-                          );
-                          new_balance_update
-                            .then(() => {
-                              res.json({ status: true, msg: "Order created" });
-                            })
-                            .catch((err) => {
-                              console.log(err);
-                              console.log('1')
-                            });
-                        })
-                        .catch((err) => {
-                          console.log(err);
-                          console.log('2')
-                        });
-                    })
-                    .catch((err) => {
-                      console.log(err);
-                      console.log('3')
+                    const insert_order = createOrder(
+                      symbol,
+                      current_price,
+                      invest,
+                      balance,
+                      user_id
+                    );
+                    insert_order
+                      .then(() => {
+                        const get_balance = selectBalance(user_id);
+                        get_balance
+                          .then((bank) => {
+                            let last_balance = bank[0][0].balance;
+                            let new_balance = last_balance - invest;
+                            let new_balance_update = newBalance(
+                              new_balance,
+                              invest,
+                              "OPEN",
+                              user_id
+                            );
+                            new_balance_update
+                              .then(() => {
+                                res.json({
+                                  status: true,
+                                  msg: "Order created",
+                                });
+                              })
+                              .catch((err) => {
+                                console.log(err);
+                                console.log("1");
+                              });
+                          })
+                          .catch((err) => {
+                            console.log(err);
+                            console.log("2");
+                          });
+                      })
+                      .catch((err) => {
+                        console.log(err);
+                        console.log("3");
+                      });
+                  } else {
+                    res.json({
+                      status: true,
+                      msg: "Already exist a order for that market",
                     });
-                } else {
-                  res.json({
-                    status: true,
-                    msg: "Already exist a order for that market",
-                  });
-                }
-              })
-              .catch((err) => {
-                console.log(err);
-                console.log('4')
-              });
+                  }
+                })
+                .catch((err) => {
+                  console.log(err);
+                  console.log("4");
+                });
+            }
           });
         } else {
           res.json({
@@ -108,7 +113,7 @@ router.post("/open", function (req, res, next) {
       })
       .catch((err) => {
         console.log(err);
-        console.log('5')
+        console.log("5");
       });
   } else {
     res.json({
@@ -133,51 +138,52 @@ router.post("/close", function (req, res) {
           var current_ticker = ticker.filter(function (market) {
             return market.symbol == symbol;
           });
-          current_ticker = current_ticker[0];
+          if (current_ticker.length > 0) {
+            current_ticker = current_ticker[0];
+            let current_price = current_ticker.askPrice;
 
-          let current_price = current_ticker.askPrice;
-
-          let order_opened = selectOrderOpened(symbol, user_id);
-          order_opened.then((order_data) => {
-            order_data = order_data[0];
-            if (order_data.length > 0) {
-              let id = order_data[0].id;
-              let balance = order_data[0].balance;
-              let open_price = order_data[0].open_price;
-              let invest = order_data[0].invest;
-              let invest_return = parseFloat(balance * current_price).toFixed(
-                3
-              );
-              let benefit = invest_return - invest;
-              let profit = parseFloat((benefit * 100) / invest).toFixed(3);
-              const order_close = closeOrder(
-                id,
-                current_price,
-                invest_return,
-                benefit,
-                profit,
-                user_id
-              );
-              order_close.then(() => {
-                const get_balance = selectBalance(user_id);
-                get_balance.then((bank) => {
-                  let last_balance = bank[0][0].balance;
-                  let new_balance = last_balance - invest_return;
-                  let new_balance_update = newBalance(
-                    new_balance,
-                    invest,
-                    "CLOSED",
-                    user_id
-                  );
-                  new_balance_update.then(() => {
-                    res.json({ status: true, msg: "Order Closed" });
+            let order_opened = selectOrderOpened(symbol, user_id);
+            order_opened.then((order_data) => {
+              order_data = order_data[0];
+              if (order_data.length > 0) {
+                let id = order_data[0].id;
+                let balance = order_data[0].balance;
+                let open_price = order_data[0].open_price;
+                let invest = order_data[0].invest;
+                let invest_return = parseFloat(balance * current_price).toFixed(
+                  3
+                );
+                let benefit = invest_return - invest;
+                let profit = parseFloat((benefit * 100) / invest).toFixed(3);
+                const order_close = closeOrder(
+                  id,
+                  current_price,
+                  invest_return,
+                  benefit,
+                  profit,
+                  user_id
+                );
+                order_close.then(() => {
+                  const get_balance = selectBalance(user_id);
+                  get_balance.then((bank) => {
+                    let last_balance = bank[0][0].balance;
+                    let new_balance = last_balance - invest_return;
+                    let new_balance_update = newBalance(
+                      new_balance,
+                      invest,
+                      "CLOSED",
+                      user_id
+                    );
+                    new_balance_update.then(() => {
+                      res.json({ status: true, msg: "Order Closed" });
+                    });
                   });
                 });
-              });
-            } else {
-              res.json({ status: true, msg: "No orders to close" });
-            }
-          });
+              } else {
+                res.json({ status: true, msg: "No orders to close" });
+              }
+            });
+          }
         });
       } else {
         res.json({
